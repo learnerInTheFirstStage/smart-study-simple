@@ -24,7 +24,7 @@ const Schedule = () => {
   const fetchDailyTasks = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:5000/api/daily-tasks");
+      const response = await axios.get("http://127.0.0.1:5001/api/daily-tasks");
       setDailyTasks(response.data);
       setLoading(false);
     } catch (error) {
@@ -34,8 +34,6 @@ const Schedule = () => {
 
   return (
     <Box p={4}>
-      <Typography variant="h4">Your Customized Study Plan 📅</Typography>
-
       {/* Loading Indicator */}
       {loading ? (
         <Box display="flex" justifyContent="center" mt={4}>

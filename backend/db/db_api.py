@@ -12,7 +12,7 @@ def create_study_plan(topics_data, filename):
     filename - Name of the uploaded file
     
     Returns:
-    Plan ID and daily tasks list
+    Study plan data including daily tasks
     """
     # Create study plan
     study_plan = StudyPlan(filename=filename)
@@ -38,8 +38,7 @@ def create_study_plan(topics_data, filename):
         db.session.flush()
         
         daily_tasks.append({
-            'task_id': daily_task.id,
-            'day': day_number,
+            'day_number': day_number,
             'topic_name': topic_name,
             'objectives': objective
         })
@@ -49,7 +48,24 @@ def create_study_plan(topics_data, filename):
     # Commit transaction
     db.session.commit()
     
-    return study_plan.id, daily_tasks
+    # Create response with the generated IDs now available
+    response = {
+        'study_plan_id': study_plan.id,
+        'filename': filename,
+        'daily_tasks': []
+    }
+    
+    # Get all tasks with their generated IDs
+    tasks = DailyTask.query.filter_by(study_plan_id=study_plan.id).order_by(DailyTask.day_number).all()
+    for task in tasks:
+        response['daily_tasks'].append({
+            'task_id': task.id,
+            'day_number': task.day_number,
+            'topic_name': task.topic_name,
+            'objectives': task.objectives
+        })
+    
+    return response
 
 # Question management functions
 def add_questions_to_task(daily_task_id, mc_questions, fb_questions=None):
@@ -135,8 +151,8 @@ def save_user_answers(daily_task_id, mc_answers, fb_answers=None):
     Save user answers and update statistics
     
     Parameters:
-    daily_task_id - Task ID
-    mc_answers - Multiple choice answers [{question_id: ID, option: selected_option}, ...]
+    daily_task_id - Task ID from database
+    mc_answers - Multiple choice answers [{question_id: ID, selected_option: index}, ...]
     fb_answers - Fill-in-the-blank answers [{question_id: ID, answer: text_answer}, ...]
     
     Returns:
@@ -154,7 +170,7 @@ def save_user_answers(daily_task_id, mc_answers, fb_answers=None):
     # Process multiple choice answers
     for answer_data in mc_answers:
         question_id = answer_data.get('question_id')
-        selected_option = answer_data.get('option')
+        selected_option = answer_data.get('selected_option')
         
         question = Question.query.get(question_id)
         if not question or question.question_type != 'multiple_choice':

@@ -1,4 +1,4 @@
-from db.database import db, StudyPlan, DailyTask, Question
+from db.database import db, StudyPlan, DailyTask
 from datetime import datetime
 import json
 
@@ -22,17 +22,51 @@ def create_study_plan(topics_data, filename):
     # Create daily tasks
     day_number = 1
     daily_tasks = []
-    
-    for topic_name, objective in topics_data.items():
+    topic_data = {
+    "Day 1": {
+        "topic_name": "File Management",
+        "objectives": "Learn to use ls, mkdir, cp, and rm commands by practicing with simple commands and examples."
+    },
+    "Day 2": {
+        "topic_name": "Process Management",
+        "objectives": "Learn to use ps, kill, and bg commands to manage processes by understanding how to list running processes and stop/resume jobs."
+    },
+    "Day 3": {
+        "topic_name": "File Permissions",
+        "objectives": "Learn to use chmod and chown commands to change file permissions by practicing with different permission settings."
+    },
+    "Day 4": {
+        "topic_name": "Terminal Navigation",
+        "objectives": "Learn to use cd, pwd, and mkdir commands to navigate directories and understand the concept of path."
+    },
+    "Day 5": {
+        "topic_name": "File Search and Navigation",
+        "objectives": "Learn to use locate, grep, and find commands to search for files and navigate the file system."
+    },
+    "Day 6": {
+        "topic_name": "Copying and Renaming",
+        "objectives": "Learn to use cp, mv, and rename commands to copy and rename files."
+    },
+    "Day 7": {
+        "topic_name": "Networking Basics",
+        "objectives": "Learn basic networking commands like ping, netstat, and ssh to understand networking in Linux."
+    }
+}
+    for day_key, data in topic_data.items():
         if day_number > 7:  # Only create 7 days of plan
             break
+
         
         # Create daily task
+        topic_name = data['topic_name']
+        objectives = data['objectives']
+    
+    # Create daily task
         daily_task = DailyTask(
-            study_plan_id=study_plan.id,
+            study_plan_id=study_plan.id,  # Ensure study_plan.id is set properly
             day_number=day_number,
             topic_name=topic_name,
-            objectives=objective
+            objectives=objectives
         )
         db.session.add(daily_task)
         db.session.flush()

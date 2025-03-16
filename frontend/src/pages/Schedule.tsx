@@ -14,23 +14,63 @@ interface DailyTask {
 
 const Schedule = () => {
   const [loading, setLoading] = useState(false);
-  const [dailyTasks, setDailyTasks] = useState<DailyTask[]>([]);
+  
 
-  useEffect(() => {
-    fetchDailyTasks();
-  }, []);
+  
 
   // Extract key topics from database
-  const fetchDailyTasks = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get("http://127.0.0.1:5001/api/daily-tasks");
-      setDailyTasks(response.data);
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching daily tasks:", error);
+  const dailyTasks = [
+    {
+      id: 1,
+      day_number: 1,
+      topic_name: "File Management",
+      objectives: "Learn to use ls, mkdir, cp, and rm commands by practicing with simple commands and examples.",
+      completed: false
+    },
+    {
+      id: 2,
+      day_number: 2,
+      topic_name: "Process Management",
+      objectives: "Learn to use ps, kill, and bg commands to manage processes by understanding how to list running processes and stop/resume jobs.",
+      completed: true
+    },
+    {
+      id: 3,
+      day_number: 3,
+      topic_name: "File Permissions",
+      objectives: "Learn to use chmod and chown commands to change file permissions by practicing with different permission settings.",
+      completed: false
+    },
+    {
+      id: 4,
+      day_number: 4,
+      topic_name: "Terminal Navigation",
+      objectives: "Learn to use cd, pwd, and mkdir commands to navigate directories and understand the concept of path.",
+      completed: true
+    },
+    {
+      id: 5,
+      day_number: 5,
+      topic_name: "File Search and Navigation",
+      objectives: "Learn to use locate, grep, and find commands to search for files and navigate the file system.",
+      completed: false
+    },
+    {
+      id: 6,
+      day_number: 6,
+      topic_name: "Copying and Renaming",
+      objectives: "Learn to use cp, mv, and rename commands to copy and rename files.",
+      completed: true
+    },
+    {
+      id: 7,
+      day_number: 7,
+      topic_name: "Networking Basics",
+      objectives: "Learn basic networking commands like ping, netstat, and ssh to understand networking in Linux.",
+      completed: false
     }
-  };
+  ];
+  
 
   return (
     <Box p={4}>

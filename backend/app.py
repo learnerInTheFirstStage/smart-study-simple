@@ -3,11 +3,11 @@ from flask import Flask, request, jsonify  # Flask框架核心组件
 from flask_cors import CORS  # 处理跨域资源共享(CORS)
 import os  # 操作系统相关功能
 # from api.pdf_processor import extract_text  # 自定义PDF文本提取模块
-# from api.ai_handler import generate_questions, generate_study_plan  # AI生成问题和学习计划的模块
+from api.ai_handler import  generate_study_plan  # AI生成问题和学习计划的模块
 
 # Import database models
-from database import db
-from db_api import (
+from db.database import db
+from db.db_api import (
     create_study_plan, add_questions_to_task, 
     get_task_questions, save_user_answers, get_wrong_questions,
     get_study_plan, get_topic_mastery
@@ -18,7 +18,8 @@ from api.api_frontend import register_routes
 
 app = Flask(__name__)
 CORS(app)  # 启用CORS，允许来自不同域的前端访问这个API
-
+init_db(app)
+register_routes(app)
 # # 设置上传文件夹
 # UPLOAD_FOLDER = 'uploads'  # 定义上传文件的存储路径
 # os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # 确保上传文件夹存在，如不存在则创建
@@ -54,6 +55,6 @@ if __name__ == '__main__':
     # 启动Flask应用服务器
     app.run(
         host='0.0.0.0',  # 监听所有可用的网络接口
-        port=5000,       # 在端口5000上运行
+        port=5001,       # 在端口5000上运行
         threaded=True    # 启用多线程处理请求
     )

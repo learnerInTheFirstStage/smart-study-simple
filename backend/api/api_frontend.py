@@ -93,21 +93,29 @@ def get_performance_analysis():
 def update_daily_task():
     data = request.json
     task_id = data.get('task_id')
-    is_correct = data.get('is_correct')
+    answers = data.get('answers', [])  # List of answers for the batch
 
     task = DailyTask.query.get(task_id)
     if not task:
         return jsonify({"error": "Daily task not found"}), 404
 
-    # Update fields
+    total_questions = len(answers)
+    correct_answers = sum(1 for answer in answers if answer.get('isCorrect'))
+    wrong_answers = total_questions - correct_answers
+
+    # Update fields based on answers
     task.completed = True  # Mark as completed
-    task.total_questions += 1  # Increment total questions
-    if not is_correct:
-        task.wrong_count += 1  # Increment wrong count if incorrect
+    task.total_questions += total_questions  # Increment total questions by the number of answers submitted
+    task.correct_count += correct_answers  # Increment correct count
+    task.wrong_count += wrong_answers  # Increment wrong count
+
+    # If necessary, you can log each individual answer for later review
+    for answer in answers:
+        # Here you could store individual user answers or any additional tracking data
+        pass  # For now, we are updating only the counts for the task
 
     db.session.commit()
     return jsonify({"message": "Daily task updated successfully!"})
-
 
 def register_routes(app):
     app.register_blueprint(api_frontend)

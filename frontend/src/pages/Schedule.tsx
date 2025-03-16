@@ -1,89 +1,82 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button } from "@mui/material";
+import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress } from "@mui/material";
+import axios from "axios";
+
+interface DailyTask {
+  id: number;
+  day_number: number;
+  topic_name: string;
+  objectives: string;
+  completed: boolean;
+  total_questions: number;
+  wrong_count: number;
+}
 
 const Schedule = () => {
-  const [studyMaterial, setStudyMaterial] = useState<string | null>(null);
-  const [studyPlan, setStudyPlan] = useState<{ day: string; topic: string }[]>([]);
   const [loading, setLoading] = useState(false);
+  const [dailyTasks, setDailyTasks] = useState<DailyTask[]>([]);
 
-  // Load study material when the component mounts
   useEffect(() => {
-    const storedMaterial = localStorage.getItem("uploadedStudyMaterial");
-    if (storedMaterial) {
-      setStudyMaterial(storedMaterial);
-      generateStudyPlan(storedMaterial);
-    }
+    fetchDailyTasks();
   }, []);
 
-  // Extract key topics from study material (Mock function)
-  const extractKeyTopics = (text: string): string[] => {
-    const sentences = text.split(".").map((s) => s.trim());
-    return sentences.slice(0, 7); // Take first 7 sentences as key topics
-  };
-
-  // Generate Study Plan using AI API (Mocked)
-  const generateStudyPlan = async (text: string) => {
-    setLoading(true);
-
-    // Mock AI processing (Replace with real AI API)
-    const topics = extractKeyTopics(text);
-
-    // Generate a study plan (assign topics across days)
-    const plan = topics.map((topic, index) => ({
-      day: `Day ${index + 1}`,
-      topic,
-    }));
-
-    setStudyPlan(plan);
-    localStorage.setItem("studyPlan", JSON.stringify(plan)); // Save plan locally
-    setLoading(false);
+  // Extract key topics from database
+  const fetchDailyTasks = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get("http://localhost:5000/api/daily-tasks");
+      setDailyTasks(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching daily tasks:", error);
+    }
   };
 
   return (
     <Box p={4}>
-      <Typography variant="h4">Your very own customized Study Plan 📅</Typography>
-
-      {/* Display Study Material */}
-      {studyMaterial ? (
-        <Typography variant="subtitle1" sx={{ mt: 2, fontStyle: "italic" }}>
-          Study material uploaded. Study plan generated.
-        </Typography>
-      ) : (
-        <Typography variant="subtitle1" sx={{ mt: 2, color: "red" }}>
-          No study materials uploaded. Please go to "STUDY MATERIALS" page to upload.
-        </Typography>
-      )}
+      <Typography variant="h4">Your Customized Study Plan 📅</Typography>
 
       {/* Loading Indicator */}
-      {loading && <Typography>⏳ Generating study plan...</Typography>}
-
-      {/* Display Study Plan */}
-      {studyPlan.length > 0 && (
-        <TableContainer component={Paper} sx={{ mt: 3 }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Day</TableCell>
-                <TableCell>Study Topic</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {studyPlan.map((entry, index) => (
-                <TableRow key={index}>
-                  <TableCell>{entry.day}</TableCell>
-                  <TableCell>{entry.topic}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-
-      {/* Clear Schedule Button */}
-      {studyPlan.length > 0 && (
-        <Button variant="contained" color="secondary" sx={{ mt: 3 }} onClick={() => setStudyPlan([])}>
-          Clear Schedule
-        </Button>
+      {loading ? (
+        <Box display="flex" justifyContent="center" mt={4}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <>
+          {/* Display Daily Tasks */}
+          {dailyTasks.length > 0 ? (
+            <TableContainer component={Paper} sx={{ mt: 3 }}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Day</TableCell>
+                    <TableCell>Topic</TableCell>
+                    <TableCell>Objectives</TableCell>
+                    <TableCell>Completed</TableCell>
+                    <TableCell>Total Questions</TableCell>
+                    <TableCell>Wrong Count</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {dailyTasks.map((task) => (
+                    <TableRow key={task.id}>
+                      <TableCell>{task.day_number}</TableCell>
+                      <TableCell>{task.topic_name}</TableCell>
+                      <TableCell>{task.objectives}</TableCell>
+                      <TableCell>{task.completed ? "Yes" : "No"}</TableCell>
+                      <TableCell>{task.total_questions}</TableCell>
+                      <TableCell>{task.wrong_count}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <Typography variant="subtitle1" sx={{ mt: 2, color: "gray" }}>
+              No daily tasks found.
+            </Typography>
+          )}
+        </>
       )}
     </Box>
   );

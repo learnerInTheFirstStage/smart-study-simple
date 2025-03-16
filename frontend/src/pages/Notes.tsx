@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Box, Button, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
+import axios from "axios";
 
 const Notes = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -13,9 +14,18 @@ const Notes = () => {
 
     if (uploadedFile) {
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = async (event) => {
         const fileContent = event.target?.result as string;
-        localStorage.setItem("uploadedStudyMaterial", fileContent); // Store content
+  
+        try {
+          // Send the file content to the backend for generating daily tasks
+          const response = await axios.post("http://localhost:5000/api/analyze-file", {
+            file_content: fileContent,
+          });
+  
+        } catch (error) {
+          console.error("Error:", error);
+        }
       };
       reader.readAsText(uploadedFile);
     }

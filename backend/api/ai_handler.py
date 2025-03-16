@@ -82,3 +82,41 @@ def generate_study_plan(score, weak_areas):
     
     # 使用模型生成学习计划，限制最大输出token数为300
     return model.generate(prompt, max_tokens=300)
+
+# Receive message returned by the model, turn it into the plan json file, 
+# pass it to the db part: 
+    # Parameters needed:
+    #     material_id - Material ID
+    #     topics_data - Topic data dictionary {topic_name: learning_objective, ...}
+# AI暂定以下格式返回：string格式
+# 1
+# read 20 pages
+# do 30 practice problems
+# ...
+def initialize_studyplan(prompt):
+    # Send prompt to AI model
+    prompt = "Give me a plan"
+    ai_generated_plan = model.generate(prompt)
+    
+    # Parse the AI response
+    # First, split the response into lines
+    lines = ai_generated_plan.strip().split('\n')
+    
+    # Extract the material ID (first element)
+    try:
+        material_id = int(lines[0].strip())
+    except (ValueError, IndexError):
+        # Handle case where material_id is not a valid integer
+        material_id = None
+    
+    # Extract the daily tasks (remaining elements)
+    daily_tasks = []
+    for line in lines[1:]:
+        if line.strip():  # Skip empty lines
+            daily_tasks.append(line.strip())
+    
+    # Return structured plan
+    return {
+        "material_id": material_id,
+        "daily_tasks": daily_tasks
+    }

@@ -12,12 +12,17 @@ from db.db_api import (
     get_task_questions, save_user_answers, get_wrong_questions,
     get_study_plan, get_topic_mastery
 )
+from db.db_init import init_db
+
+from api.api_frontend import register_routes
 
 app = Flask(__name__)
 CORS(app)  # 启用CORS，允许来自不同域的前端访问这个API
 
 # Initialize the database
 init_db(app)
+
+register_routes(app)
 
 # 设置上传文件夹
 UPLOAD_FOLDER = 'uploads'  # 定义上传文件的存储路径
@@ -52,8 +57,6 @@ def handle_submission():
 def hello():
     return {'message': 'Hello from Flask!'}, 200
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
 
 # 计算得分的辅助函数
 def calculate_score(answers):
@@ -66,6 +69,6 @@ if __name__ == '__main__':
     # 启动Flask应用服务器
     app.run(
         host='0.0.0.0',  # 监听所有可用的网络接口
-        port=5000,       # 在端口5000上运行
+        port=5001,       # 在端口5000上运行
         threaded=True    # 启用多线程处理请求
     )

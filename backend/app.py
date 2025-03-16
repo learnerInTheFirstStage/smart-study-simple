@@ -4,6 +4,13 @@ import os
 from api.pdf_processor import extract_text
 from api.ai_handler import generate_questions, generate_study_plan
 
+# Import database models
+from database import db
+from db_api import (
+    create_user, save_material, create_study_plan, 
+    save_user_answers, get_wrong_questions, get_topic_mastery
+)
+
 app = Flask(__name__)
 CORS(app)
 

@@ -89,6 +89,25 @@ def get_performance_analysis():
 
     return jsonify(result)
 
+@api_frontend.route('/update-daily-task', methods=['POST'])
+def update_daily_task():
+    data = request.json
+    task_id = data.get('task_id')
+    is_correct = data.get('is_correct')
+
+    task = DailyTask.query.get(task_id)
+    if not task:
+        return jsonify({"error": "Daily task not found"}), 404
+
+    # Update fields
+    task.completed = True  # Mark as completed
+    task.total_questions += 1  # Increment total questions
+    if not is_correct:
+        task.wrong_count += 1  # Increment wrong count if incorrect
+
+    db.session.commit()
+    return jsonify({"message": "Daily task updated successfully!"})
+
 
 def register_routes(app):
     app.register_blueprint(api_frontend)

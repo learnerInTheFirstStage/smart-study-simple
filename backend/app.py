@@ -2,16 +2,7 @@
 from flask import Flask, request, jsonify  # Flask框架核心组件
 from flask_cors import CORS  # 处理跨域资源共享(CORS)
 import os  # 操作系统相关功能
-from api.pdf_processor import extract_text  # 自定义PDF文本提取模块
-from api.ai_handler import generate_questions, generate_study_plan  # AI生成问题和学习计划的模块
-
-# Import database models
-from database import db
-from db_api import (
-    create_study_plan, add_questions_to_task, 
-    get_task_questions, save_user_answers, get_wrong_questions,
-    get_study_plan, get_topic_mastery
-)
+from api.ai_handler import generate_study_plan  # AI生成问题和学习计划的模块
 
 app = Flask(__name__)
 CORS(app)  # 启用CORS，允许来自不同域的前端访问这个API
@@ -27,10 +18,8 @@ def handle_upload():
     if 'file' not in request.files:
         return jsonify({'error': 'No file uploaded'}), 400  # 如果没有文件，返回400错误
     
-    # 获取上传的文件
     file = request.files['file']
     
-    # 处理上传的文件
     questions_all = generate_study_plan(file)
     return jsonify({'questions': questions_all})  # 返回生成的问题作为JSON响应
 

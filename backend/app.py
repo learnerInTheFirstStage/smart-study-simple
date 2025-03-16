@@ -2,19 +2,33 @@
 from flask import Flask, request, jsonify  # Flask框架核心组件
 from flask_cors import CORS  # 处理跨域资源共享(CORS)
 import os  # 操作系统相关功能
-from api.pdf_processor import extract_text  # 自定义PDF文本提取模块
-from api.ai_handler import generate_questions, generate_study_plan  # AI生成问题和学习计划的模块
+# from api.pdf_processor import extract_text  # 自定义PDF文本提取模块
+# from api.ai_handler import generate_questions, generate_study_plan  # AI生成问题和学习计划的模块
 
 # Import database models
+<<<<<<< HEAD
 from database import db
 from db_api import (
     create_study_plan, add_questions_to_task, 
+=======
+from db.database import db
+from db.db_api import (
+    save_material, create_study_plan, add_questions_to_task, 
+>>>>>>> 0fb6183b835f4a400d64ecf8260ea7af14f17ca8
     get_task_questions, save_user_answers, get_wrong_questions,
     get_study_plan, get_topic_mastery
 )
+from db.db_init import init_db
+
+from api.api_frontend import register_routes
 
 app = Flask(__name__)
 CORS(app)  # 启用CORS，允许来自不同域的前端访问这个API
+
+# Initialize the database
+init_db(app)
+
+register_routes(app)
 
 # 设置上传文件夹
 UPLOAD_FOLDER = 'uploads'  # 定义上传文件的存储路径
@@ -45,6 +59,11 @@ def handle_submission():
     study_plan = generate_study_plan(score, data['weak_areas'])  # 根据得分和弱点生成学习计划
     return jsonify({'score': score, 'study_plan': study_plan})  # 返回得分和学习计划
 
+@app.route('/api/hello', methods=['GET'])
+def hello():
+    return {'message': 'Hello from Flask!'}, 200
+
+
 # 计算得分的辅助函数
 def calculate_score(answers):
     # 计算正确答案的比例作为分数
@@ -56,6 +75,6 @@ if __name__ == '__main__':
     # 启动Flask应用服务器
     app.run(
         host='0.0.0.0',  # 监听所有可用的网络接口
-        port=5000,       # 在端口5000上运行
+        port=5001,       # 在端口5000上运行
         threaded=True    # 启用多线程处理请求
     )

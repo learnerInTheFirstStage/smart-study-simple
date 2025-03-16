@@ -7,8 +7,9 @@ from api.ai_handler import generate_questions, generate_study_plan
 # Import database models
 from database import db
 from db_api import (
-    create_user, save_material, create_study_plan, 
-    save_user_answers, get_wrong_questions, get_topic_mastery
+    save_material, create_study_plan, add_questions_to_task, 
+    get_task_questions, save_user_answers, get_wrong_questions,
+    get_study_plan, get_topic_mastery
 )
 
 app = Flask(__name__)

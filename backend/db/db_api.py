@@ -1,10 +1,3 @@
-# Material Management: Saving uploaded PDF files
-# Study Plan Creation: Generating a 7-day learning plan from uploaded materials
-# Question Management: Creating and retrieving multiple-choice and fill-in-the-blank questions for each topic
-# Answer Processing: Saving user answers and evaluating correctness
-# Learning Analytics: Tracking topic mastery levels and identifying weak areas
-# Wrong Answer Collection: Maintaining a list of incorrectly answered questions
-
 from db.database import db, StudyPlan, DailyTask, Question
 from datetime import datetime
 import json

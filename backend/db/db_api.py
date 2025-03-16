@@ -1,7 +1,3 @@
-from db.database import db, StudyPlan, DailyTask, Question
-from datetime import datetime
-import json
-
 # Material Management: Saving uploaded PDF files
 # Study Plan Creation: Generating a 7-day learning plan from uploaded materials
 # Question Management: Creating and retrieving multiple-choice and fill-in-the-blank questions for each topic
@@ -9,31 +5,28 @@ import json
 # Learning Analytics: Tracking topic mastery levels and identifying weak areas
 # Wrong Answer Collection: Maintaining a list of incorrectly answered questions
 
-# Material management functions
-# def save_material(filename):
-#     """Save uploaded learning material"""
-#     material = Material(filename=filename)
-#     db.session.add(material)
-#     db.session.commit()
-#     return material.material_id
+from db.database import db, StudyPlan, DailyTask, Question
+from datetime import datetime
+import json
 
 # Study plan management functions
-def create_study_plan(topics_data, title):
+def create_study_plan(topics_data, filename):
     """
     Create a seven-day study plan
     
     Parameters:
     topics_data - Topic data dictionary {topic_name: learning_objective, ...}
+    filename - Name of the uploaded file
     
     Returns:
     Plan ID and daily tasks list
     """
     # Create study plan
-    study_plan = StudyPlan(filename=title)
+    study_plan = StudyPlan(filename=filename)
     db.session.add(study_plan)
     db.session.flush()  # Get ID without committing transaction
     
-    # Create topics and associate daily tasks
+    # Create daily tasks
     day_number = 1
     daily_tasks = []
     
@@ -66,20 +59,20 @@ def create_study_plan(topics_data, title):
     return study_plan.id, daily_tasks
 
 # Question management functions
-def add_questions_to_task(task_id, mc_questions, fb_questions):
+def add_questions_to_task(daily_task_id, mc_questions, fb_questions=None):
     """
     Add questions to daily task
     
     Parameters:
-    task_id - Task ID
+    daily_task_id - Task ID
     mc_questions - Multiple choice questions list [{'question': 'question text', 'options': ['option1', 'option2', ...], 'correct': correct_option_index}, ...]
     fb_questions - Fill-in-the-blank questions list [{'question': 'question text', 'answer': 'correct answer'}, ...]
     
     Returns:
     Number of questions added
     """
-    # Get task and associated topic
-    task = DailyTask.query.get(task_id)
+    # Get task
+    task = DailyTask.query.get(daily_task_id)
     if not task:
         return 0
     
@@ -88,8 +81,7 @@ def add_questions_to_task(task_id, mc_questions, fb_questions):
     # Add multiple choice questions
     for q_data in mc_questions:
         question = Question(
-            task_id=task_id,
-            topic_id=task.topic_id,
+            daily_task_id=daily_task_id,
             question_text=q_data['question'],
             question_type='multiple_choice',
             options=json.dumps(q_data['options']),
@@ -99,23 +91,28 @@ def add_questions_to_task(task_id, mc_questions, fb_questions):
         count += 1
     
     # Add fill-in-the-blank questions
-    for q_data in fb_questions:
-        question = Question(
-            task_id=task_id,
-            topic_id=task.topic_id,
-            question_text=q_data['question'],
-            question_type='fill_blank',
-            correct_answer=q_data['answer']
-        )
-        db.session.add(question)
-        count += 1
+    if fb_questions:
+        for q_data in fb_questions:
+            question = Question(
+                daily_task_id=daily_task_id,
+                question_text=q_data['question'],
+                question_type='fill_blank',
+                correct_answer=q_data['answer']
+            )
+            db.session.add(question)
+            count += 1
     
     db.session.commit()
+    
+    # Update the task's total_questions count
+    task.total_questions = count
+    db.session.commit()
+    
     return count
 
-def get_task_questions(task_id):
+def get_task_questions(daily_task_id):
     """Get all questions for a task"""
-    questions = Question.query.filter_by(task_id=task_id).all()
+    questions = Question.query.filter_by(daily_task_id=daily_task_id).all()
     
     result = {
         'multiple_choice': [],
@@ -125,27 +122,27 @@ def get_task_questions(task_id):
     for q in questions:
         if q.question_type == 'multiple_choice':
             result['multiple_choice'].append({
-                'id': q.question_id,
+                'id': q.id,
                 'question': q.question_text,
                 'options': json.loads(q.options),
-                'correct': q.correct_option  # Note: In production, you might not want to return the correct answer
+                'correct': q.correct_option
             })
         else:  # fill_blank
             result['fill_blank'].append({
-                'id': q.question_id,
+                'id': q.id,
                 'question': q.question_text,
-                'answer': q.correct_answer  # Note: In production, you might not want to return the correct answer
+                'answer': q.correct_answer
             })
     
     return result
 
 # Answer management functions
-def save_user_answers(task_id, mc_answers, fb_answers):
+def save_user_answers(daily_task_id, mc_answers, fb_answers=None):
     """
-    Save user answers and update topic mastery level
+    Save user answers and update statistics
     
     Parameters:
-    task_id - Task ID
+    daily_task_id - Task ID
     mc_answers - Multiple choice answers [{question_id: ID, option: selected_option}, ...]
     fb_answers - Fill-in-the-blank answers [{question_id: ID, answer: text_answer}, ...]
     
@@ -153,17 +150,13 @@ def save_user_answers(task_id, mc_answers, fb_answers):
     Answer results statistics
     """
     # Get task information
-    task = DailyTask.query.get(task_id)
+    task = DailyTask.query.get(daily_task_id)
     if not task:
         return None
     
     # Statistics
     total = 0
-    correct = 0
-    mc_total = 0
-    mc_correct = 0
-    fb_total = 0
-    fb_correct = 0
+    wrong_count = 0
     
     # Process multiple choice answers
     for answer_data in mc_answers:
@@ -176,99 +169,51 @@ def save_user_answers(task_id, mc_answers, fb_answers):
         
         is_correct = (selected_option == question.correct_option)
         
-        # Save answer
-        answer = UserAnswer(
-            question_id=question_id,
-            selected_option=selected_option,
-            is_correct=is_correct
-        )
-        db.session.add(answer)
+        # Update question statistics
+        question.times_attempted += 1
+        if not is_correct:
+            question.times_incorrect += 1
+            wrong_count += 1
         
-        # Update statistics
         total += 1
-        mc_total += 1
-        if is_correct:
-            correct += 1
-            mc_correct += 1
     
     # Process fill-in-the-blank answers
-    for answer_data in fb_answers:
-        question_id = answer_data.get('question_id')
-        text_answer = answer_data.get('answer')
-        
-        question = Question.query.get(question_id)
-        if not question or question.question_type != 'fill_blank':
-            continue
-        
-        # Simple check if fill-in-the-blank answer is correct (can use more complex matching logic if needed)
-        is_correct = (text_answer.strip().lower() == question.correct_answer.strip().lower())
-        
-        # Save answer
-        answer = UserAnswer(
-            question_id=question_id,
-            text_answer=text_answer,
-            is_correct=is_correct
-        )
-        db.session.add(answer)
-        
-        # Update statistics
-        total += 1
-        fb_total += 1
-        if is_correct:
-            correct += 1
-            fb_correct += 1
-    
-    # Update topic mastery level
-    score = correct / total if total > 0 else 0
-    
-    # Determine mastery level based on score
-    if score >= 0.85:
-        mastery_level = "mastered"
-    elif score >= 0.7:
-        mastery_level = "familiar"
-    elif score >= 0.5:
-        mastery_level = "learning"
-    else:
-        mastery_level = "weak"
-    
-    # Update or create mastery record
-    mastery = TopicMastery.query.filter_by(
-        topic_id=task.topic_id
-    ).first()
-    
-    if mastery:
-        mastery.mastery_level = mastery_level
-        mastery.updated_at = datetime.utcnow()
-    else:
-        mastery = TopicMastery(
-            topic_id=task.topic_id,
-            mastery_level=mastery_level
-        )
-        db.session.add(mastery)
+    if fb_answers:
+        for answer_data in fb_answers:
+            question_id = answer_data.get('question_id')
+            text_answer = answer_data.get('answer')
+            
+            question = Question.query.get(question_id)
+            if not question or question.question_type != 'fill_blank':
+                continue
+            
+            # Simple check if fill-in-the-blank answer is correct
+            is_correct = (text_answer.strip().lower() == question.correct_answer.strip().lower())
+            
+            # Update question statistics
+            question.times_attempted += 1
+            if not is_correct:
+                question.times_incorrect += 1
+                wrong_count += 1
+            
+            total += 1
     
     # Mark task as completed
     task.completed = True
+    
+    # Update task statistics
+    task.total_questions = total
+    task.wrong_count = wrong_count
     
     # Commit transaction
     db.session.commit()
     
     # Return results
     return {
-        'task_id': task_id,
-        'topic_id': task.topic_id,
-        'topic_name': Topic.query.get(task.topic_id).name,
+        'task_id': daily_task_id,
         'total_questions': total,
-        'correct_answers': correct,
-        'score': score,
-        'mastery_level': mastery_level,
-        'multiple_choice': {
-            'total': mc_total,
-            'correct': mc_correct
-        },
-        'fill_blank': {
-            'total': fb_total,
-            'correct': fb_correct
-        }
+        'wrong_count': wrong_count,
+        'score': (total - wrong_count) / total if total > 0 else 0
     }
 
 # Study plan query functions
@@ -278,94 +223,76 @@ def get_study_plan(plan_id):
     if not plan:
         return None
     
-    # Get material information
-    material = Material.query.get(plan.material_id)
-    
     # Get all daily tasks
-    tasks = DailyTask.query.filter_by(plan_id=plan_id).order_by(DailyTask.day_number).all()
+    tasks = DailyTask.query.filter_by(study_plan_id=plan_id).order_by(DailyTask.day_number).all()
     
     daily_tasks = []
     for task in tasks:
-        # Get topic information
-        topic = Topic.query.get(task.topic_id)
-        
         # Get question count
-        question_count = Question.query.filter_by(task_id=task.task_id).count()
-        
-        # Get topic mastery level
-        mastery = TopicMastery.query.filter_by(
-            topic_id=task.topic_id
-        ).first()
+        question_count = Question.query.filter_by(daily_task_id=task.id).count()
         
         daily_tasks.append({
             'day': task.day_number,
-            'task_id': task.task_id,
-            'topic': topic.name,
+            'task_id': task.id,
+            'topic_name': task.topic_name,
             'objectives': task.objectives,
             'completed': task.completed,
             'question_count': question_count,
-            'mastery_level': mastery.mastery_level if mastery else 'not_started'
+            'total_questions': task.total_questions,
+            'wrong_count': task.wrong_count
         })
     
     return {
-        'plan_id': plan.plan_id,
-        'material': material.filename,
+        'plan_id': plan.id,
+        'filename': plan.filename,
         'created_at': plan.created_at.strftime('%Y-%m-%d'),
         'daily_tasks': daily_tasks
     }
 
 # Wrong questions management functions
-def get_wrong_questions(topic_id=None):
+def get_wrong_questions(daily_task_id=None):
     """
     Get wrong questions list
     
     Parameters:
-    topic_id - Optional, specify topic ID to filter
+    daily_task_id - Optional, specify task ID to filter
     
     Returns:
     List of wrong questions
     """
     # Build query
-    query = UserAnswer.query.filter_by(is_correct=False)
+    query = Question.query.filter(Question.times_incorrect > 0)
     
-    # If topic specified, add filter condition
-    if topic_id:
-        query = query.join(Question).filter(Question.topic_id == topic_id)
+    # If task specified, add filter condition
+    if daily_task_id:
+        query = query.filter(Question.daily_task_id == daily_task_id)
     
     # Execute query
-    wrong_answers = query.order_by(UserAnswer.answer_time.desc()).all()
+    wrong_questions = query.all()
     
     result = []
-    for answer in wrong_answers:
-        question = Question.query.get(answer.question_id)
-        if not question:
-            continue
-        
-        # Get topic information
-        topic = Topic.query.get(question.topic_id)
-        
+    for question in wrong_questions:
         # Get task information
-        task = DailyTask.query.get(question.task_id)
+        task = DailyTask.query.get(question.daily_task_id)
         
         wrong_item = {
-            'question_id': question.question_id,
+            'question_id': question.id,
             'question_type': question.question_type,
             'question_text': question.question_text,
-            'topic': topic.name if topic else 'Unknown',
-            'day': task.day_number if task else None,
-            'answer_time': answer.answer_time.strftime('%Y-%m-%d %H:%M:%S')
+            'topic_name': task.topic_name if task else 'Unknown',
+            'day_number': task.day_number if task else None,
+            'times_attempted': question.times_attempted,
+            'times_incorrect': question.times_incorrect
         }
         
         # Add type-specific information
         if question.question_type == 'multiple_choice':
             wrong_item.update({
                 'options': json.loads(question.options),
-                'selected_option': answer.selected_option,
                 'correct_option': question.correct_option
             })
         else:  # fill_blank
             wrong_item.update({
-                'user_answer': answer.text_answer,
                 'correct_answer': question.correct_answer
             })
         
@@ -375,20 +302,44 @@ def get_wrong_questions(topic_id=None):
 
 # Topic mastery management functions
 def get_topic_mastery():
-    """Get all topic mastery information"""
-    mastery_records = TopicMastery.query.all()
+    """Get all topic mastery information by analyzing tasks"""
+    # Get all completed tasks
+    tasks = DailyTask.query.filter_by(completed=True).all()
     
+    # Group by topic
+    topics = {}
+    for task in tasks:
+        if task.topic_name not in topics:
+            topics[task.topic_name] = {
+                'total_questions': 0,
+                'wrong_count': 0
+            }
+        
+        topics[task.topic_name]['total_questions'] += task.total_questions
+        topics[task.topic_name]['wrong_count'] += task.wrong_count
+    
+    # Calculate mastery levels
     result = []
-    for record in mastery_records:
-        topic = Topic.query.get(record.topic_id)
-        if not topic:
-            continue
+    for topic_name, stats in topics.items():
+        if stats['total_questions'] == 0:
+            mastery_level = 'not_started'
+        else:
+            score = (stats['total_questions'] - stats['wrong_count']) / stats['total_questions']
             
+            if score >= 0.85:
+                mastery_level = "mastered"
+            elif score >= 0.7:
+                mastery_level = "familiar"
+            elif score >= 0.5:
+                mastery_level = "learning"
+            else:
+                mastery_level = "weak"
+        
         result.append({
-            'topic_id': record.topic_id,
-            'topic_name': topic.name,
-            'mastery_level': record.mastery_level,
-            'updated_at': record.updated_at.strftime('%Y-%m-%d %H:%M:%S')
+            'topic_name': topic_name,
+            'mastery_level': mastery_level,
+            'total_questions': stats['total_questions'],
+            'wrong_count': stats['wrong_count']
         })
     
     return result

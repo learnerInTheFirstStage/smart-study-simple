@@ -21,17 +21,16 @@ class DailyTask(db.Model):
     total_questions = db.Column(db.Integer, default=0)
     wrong_count = db.Column(db.Integer, default=0) 
     study_plan = db.relationship("StudyPlan", back_populates="daily_tasks")
-    questions = db.relationship("Question", back_populates="daily_task")
     
-class Question(db.Model):
-    __tablename__ = 'questions'
-    id = db.Column(db.Integer, primary_key=True)
-    daily_task_id = db.Column(db.Integer, db.ForeignKey('daily_tasks.id'))
-    question_text = db.Column(db.Text, nullable=False)
-    question_type = db.Column(db.String(20), nullable=False)  # multiple_choice / fill_blank
-    options = db.Column(db.JSON, nullable=True)  
-    correct_option = db.Column(db.Integer, nullable=True) 
-    correct_answer = db.Column(db.Text, nullable=True)  
-    times_attempted = db.Column(db.Integer, default=0)
-    times_incorrect = db.Column(db.Integer, default=0) 
-    daily_task = db.relationship("DailyTask", back_populates="questions")
+# class Question(db.Model):
+#     __tablename__ = 'questions'
+#     id = db.Column(db.Integer, primary_key=True)
+#     daily_task_id = db.Column(db.Integer, db.ForeignKey('daily_tasks.id'))
+#     question_text = db.Column(db.Text, nullable=False)
+#     question_type = db.Column(db.String(20), nullable=False)  # multiple_choice / fill_blank
+#     options = db.Column(db.JSON, nullable=True)  
+#     correct_option = db.Column(db.Integer, nullable=True) 
+#     correct_answer = db.Column(db.Text, nullable=True)  
+#     times_attempted = db.Column(db.Integer, default=0)
+#     times_incorrect = db.Column(db.Integer, default=0) 
+#     daily_task = db.relationship("DailyTask", back_populates="questions")

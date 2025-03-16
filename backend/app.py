@@ -6,9 +6,9 @@ import os  # 操作系统相关功能
 # from api.ai_handler import generate_questions, generate_study_plan  # AI生成问题和学习计划的模块
 
 # Import database models
-from database import db
-from db_api import (
-    create_study_plan, add_questions_to_task, 
+from db.database import db
+from db.db_api import (
+    save_material, create_study_plan, add_questions_to_task, 
     get_task_questions, save_user_answers, get_wrong_questions,
     get_study_plan, get_topic_mastery
 )

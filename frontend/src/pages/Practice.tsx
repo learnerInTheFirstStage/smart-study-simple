@@ -157,6 +157,7 @@
 // Static
 import React, { useState, useEffect } from "react";
 import { Box, Typography, Button, Radio, RadioGroup, FormControlLabel, TextField } from "@mui/material";
+import axios from "axios";
 
 interface Question {
   id: number;
@@ -216,22 +217,37 @@ const Practice = () => {
         timestamp: new Date().toLocaleString(),
       };    
 
-    // Store quiz attempt in local storage
-    const storedHistory = JSON.parse(localStorage.getItem("quizHistory") || "[]");
-    storedHistory.push(userResponse);
-    localStorage.setItem("quizHistory", JSON.stringify(storedHistory));
+    // // Store quiz attempt in local storage
+    // const storedHistory = JSON.parse(localStorage.getItem("quizHistory") || "[]");
+    // storedHistory.push(userResponse);
+    // localStorage.setItem("quizHistory", JSON.stringify(storedHistory));
 
-    // Trigger storage event to notify QuizHistory.tsx
-    window.dispatchEvent(new Event("storage"));
+    // // Trigger storage event to notify QuizHistory.tsx
+    // window.dispatchEvent(new Event("storage"));
 
     // Update result message
-    setResult(
-      userResponse.isCorrect === true
-        ? "✅ Correct!"
-        : userResponse.isCorrect === false
-        ? `❌ Incorrect. Correct answer: ${userResponse.correctAnswer}`
-        : "✔ Answer submitted! (Self-review required)"
-    );
+    const handleSubmitAnswer = async (isCorrect: boolean | null, taskId: number) => {
+      setResult(
+        isCorrect === true
+          ? "✅ Correct!"
+          : isCorrect === false
+          ? `❌ Incorrect. Correct answer: ${formattedCorrectAnswer}`
+          : "✔ Answer submitted! (Self-review required)"
+      );
+    
+      // Call API to update DailyTask
+      try {
+        await axios.post("http://localhost:5001/api/update-daily-task", {
+          task_id: taskId,
+          is_correct: isCorrect,
+        });
+        console.log("Daily task updated successfully!");
+      } catch (error) {
+        console.error("Error updating daily task:", error);
+      }
+    };
+
+    handleSubmitAnswer(userResponse.isCorrect, userResponse.questionId);
 
     // Update score count
     if (userResponse.isCorrect === true) {

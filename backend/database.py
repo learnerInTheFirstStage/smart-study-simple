@@ -3,14 +3,6 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
-# 用户表：user_id主键，用户名、电子邮件、创建时间
-class User(db.Model):
-    __tablename__ = 'users'
-    user_id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
 # 材料表：material_id主键，文件名，上传日期
 class Material(db.Model):
     __tablename__ = 'materials'
@@ -25,11 +17,10 @@ class Topic(db.Model):
     material_id = db.Column(db.Integer, db.ForeignKey('materials.material_id'))
     name = db.Column(db.String(100), nullable=False)
 
-# 学习计划表：plan_id主键，用户ID，材料ID，创建时间
+# 学习计划表：plan_id主键，材料ID，创建时间
 class StudyPlan(db.Model):
     __tablename__ = 'study_plans'
     plan_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
     material_id = db.Column(db.Integer, db.ForeignKey('materials.material_id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -59,11 +50,10 @@ class Question(db.Model):
     # 填空题的正确答案
     correct_answer = db.Column(db.Text, nullable=True)  # 填空题的正确答案，选择题为null
 
-# 用户答题表：answer_id主键，用户ID，问题ID，选择的选项，是否正确，答题时间
+# 用户答题表：answer_id主键，问题ID，选择的选项，是否正确，答题时间
 class UserAnswer(db.Model):
     __tablename__ = 'user_answers'
     answer_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
     question_id = db.Column(db.Integer, db.ForeignKey('questions.question_id'))
     # 选择题的答案
     selected_option = db.Column(db.Integer, nullable=True)  # 选择题的选择，填空题为null
@@ -72,11 +62,10 @@ class UserAnswer(db.Model):
     is_correct = db.Column(db.Boolean, nullable=False)
     answer_time = db.Column(db.DateTime, default=datetime.utcnow)
 
-# 主题掌握度表：mastery_id主键，用户ID，主题ID，掌握程度，更新时间
+# 主题掌握度表：mastery_id主键，主题ID，掌握程度，更新时间
 class TopicMastery(db.Model):
     __tablename__ = 'topic_mastery'
     mastery_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
     topic_id = db.Column(db.Integer, db.ForeignKey('topics.topic_id'))
     # 掌握程度: "mastered", "familiar", "learning", "weak"
     mastery_level = db.Column(db.String(20), nullable=False)

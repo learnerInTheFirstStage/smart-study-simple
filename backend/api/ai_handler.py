@@ -1,6 +1,7 @@
 import json
 import requests
 import re  # 导入正则表达式库，用于文本模式匹配和解析
+from db.db_api import create_study_plan
 
 api_key = "F39Y0SZ-YAMM7ZA-GQVDRSB-87E9FTJ"
 
@@ -84,6 +85,7 @@ def generate_study_plan(file):
 
                 for i, question in enumerate(questions, 1):
                     questions_all.append(question)
+            create_study_plan(topics_data, title)
         return questions_all
 
         

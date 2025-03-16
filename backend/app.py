@@ -8,7 +8,7 @@ from api.ai_handler import generate_questions, generate_study_plan  # AI生成�
 # Import database models
 from database import db
 from db_api import (
-    save_material, create_study_plan, add_questions_to_task, 
+    create_study_plan, add_questions_to_task, 
     get_task_questions, save_user_answers, get_wrong_questions,
     get_study_plan, get_topic_mastery
 )

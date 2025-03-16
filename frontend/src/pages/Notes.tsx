@@ -8,26 +8,28 @@ const Notes = () => {
   const [isAnalyzed, setIsAnalyzed] = useState(false); // Controls the visibility of "View Your Schedule"
   const [isProcessing, setIsProcessing] = useState(false); // Controls button animation
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFile = e.target.files?.[0] || null;
     setFile(uploadedFile);
-
+  
     if (uploadedFile) {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const fileContent = event.target?.result as string;
+      const formData = new FormData();
+      formData.append("file", uploadedFile);
   
-        try {
-          // Send the file content to the backend for generating daily tasks
-          const response = await axios.post("http://localhost:5000/api/analyze-file", {
-            file_content: fileContent,
-          });
+      try {
+        // Send the file to the backend as FormData
+        const response = await axios.post("http://localhost:5001/api/upload", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
   
-        } catch (error) {
-          console.error("Error:", error);
-        }
-      };
-      reader.readAsText(uploadedFile);
+        console.log("Response from backend:", response.data);
+  
+        // Handle response data (e.g., displaying generated questions)
+      } catch (error) {
+        console.error("Error uploading file:", error);
+      }
     }
   };
 

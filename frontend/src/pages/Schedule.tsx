@@ -51,8 +51,6 @@ const Schedule = () => {
                     <TableCell>Topic</TableCell>
                     <TableCell>Objectives</TableCell>
                     <TableCell>Completed</TableCell>
-                    <TableCell>Total Questions</TableCell>
-                    <TableCell>Wrong Count</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -62,8 +60,6 @@ const Schedule = () => {
                       <TableCell>{task.topic_name}</TableCell>
                       <TableCell>{task.objectives}</TableCell>
                       <TableCell>{task.completed ? "Yes" : "No"}</TableCell>
-                      <TableCell>{task.total_questions}</TableCell>
-                      <TableCell>{task.wrong_count}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

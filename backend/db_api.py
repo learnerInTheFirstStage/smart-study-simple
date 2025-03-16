@@ -10,29 +10,26 @@ import json
 # Wrong Answer Collection: Maintaining a list of incorrectly answered questions
 
 # Material management functions
-def save_material(filename):
-    """Save uploaded learning material"""
-    material = Material(filename=filename)
-    db.session.add(material)
-    db.session.commit()
-    return material.material_id
+# def save_material(filename):
+#     """Save uploaded learning material"""
+#     material = Material(filename=filename)
+#     db.session.add(material)
+#     db.session.commit()
+#     return material.material_id
 
 # Study plan management functions
-def create_study_plan(material_id, topics_data):
+def create_study_plan(topics_data, title):
     """
     Create a seven-day study plan
     
     Parameters:
-    material_id - Material ID
     topics_data - Topic data dictionary {topic_name: learning_objective, ...}
     
     Returns:
     Plan ID and daily tasks list
     """
     # Create study plan
-    study_plan = StudyPlan(
-        material_id=material_id
-    )
+    study_plan = StudyPlan(filename=title)
     db.session.add(study_plan)
     db.session.flush()  # Get ID without committing transaction
     
@@ -43,35 +40,20 @@ def create_study_plan(material_id, topics_data):
     for topic_name, objective in topics_data.items():
         if day_number > 7:  # Only create 7 days of plan
             break
-            
-        # Create or get topic
-        topic = Topic.query.filter_by(
-            material_id=material_id,
-            name=topic_name
-        ).first()
-        
-        if not topic:
-            topic = Topic(
-                material_id=material_id,
-                name=topic_name
-            )
-            db.session.add(topic)
-            db.session.flush()
         
         # Create daily task
         daily_task = DailyTask(
-            plan_id=study_plan.plan_id,
+            study_plan_id=study_plan.id,
             day_number=day_number,
-            topic_id=topic.topic_id,
+            topic_name=topic_name,
             objectives=objective
         )
         db.session.add(daily_task)
         db.session.flush()
         
         daily_tasks.append({
-            'task_id': daily_task.task_id,
+            'task_id': daily_task.id,
             'day': day_number,
-            'topic_id': topic.topic_id,
             'topic_name': topic_name,
             'objectives': objective
         })
@@ -81,7 +63,7 @@ def create_study_plan(material_id, topics_data):
     # Commit transaction
     db.session.commit()
     
-    return study_plan.plan_id, daily_tasks
+    return study_plan.id, daily_tasks
 
 # Question management functions
 def add_questions_to_task(task_id, mc_questions, fb_questions):

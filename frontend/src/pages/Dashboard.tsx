@@ -5,22 +5,19 @@ import axios from "axios";
 
 const Dashboard = () => {
   const [progress, setProgress] = useState<number>(0);
-  const [error, setError] = useState<string>('');
 
   useEffect(() => {
     const fetchProgress = async () => {
       try {
-        const response = await axios.get('/api/getProgress');
-        setProgress(response.data);
+        const response = await axios.get('http://127.0.0.1:5000/api/completed-tasks-count');
+        setProgress(response.data.completed_tasks_count);
       }
       catch (error) {
-        setError('failed to fetch progress');
+        console.error('Error fetching completed tasks count:', error);
       }
     }
     fetchProgress();
   }, []);
-
-  // if (error) return <div>{error}</div>;
 
   return (
     

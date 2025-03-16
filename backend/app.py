@@ -2,7 +2,19 @@
 from flask import Flask, request, jsonify  # Flask框架核心组件
 from flask_cors import CORS  # 处理跨域资源共享(CORS)
 import os  # 操作系统相关功能
-from api.ai_handler import generate_study_plan  # AI生成问题和学习计划的模块
+# from api.pdf_processor import extract_text  # 自定义PDF文本提取模块
+# from api.ai_handler import generate_questions, generate_study_plan  # AI生成问题和学习计划的模块
+
+# Import database models
+from database import db
+from db_api import (
+    create_study_plan, add_questions_to_task, 
+    get_task_questions, save_user_answers, get_wrong_questions,
+    get_study_plan, get_topic_mastery
+)
+from db.db_init import init_db
+
+from api.api_frontend import register_routes
 
 app = Flask(__name__)
 CORS(app)  # 启用CORS，允许来自不同域的前端访问这个API

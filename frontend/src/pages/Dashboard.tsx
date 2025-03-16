@@ -3,7 +3,6 @@ import { Box, Typography, Button, LinearProgress, CircularProgress } from "@mui/
 import { Link } from "react-router-dom";
 import axios from "axios";
 
-
 interface DailyTask {
   day_number: number;
   topic_name: string;
@@ -23,11 +22,10 @@ const Dashboard = () => {
       try {
         const response = await axios.get('http://127.0.0.1:5000/api/completed-tasks-count');
         setProgress(response.data.completed_tasks_count);
-      }
-      catch (error) {
+      } catch (error) {
         console.error('Error fetching completed tasks count:', error);
       }
-    }
+    };
 
     const fetchTopReviewTasks = async () => {
       try {
@@ -56,14 +54,15 @@ const Dashboard = () => {
   }, []);
 
   return (
-    
-    <Box p={4}>
-      <Typography variant="h4">WELCOME BACK TO STUDY 🎓</Typography>
-      <Typography variant="subtitle1" mt={2}>YOUR PROGRESS:</Typography>
-      <LinearProgress variant="determinate" value={progress} sx={{ height: 10, borderRadius: 5, mt: 1 }} />
-      <Typography variant="body2" mt={1}>{progress}% COMPLETED</Typography>
+    <Box p={4} maxWidth="800px" mx="auto">
+      <Typography variant="h4" mb={3} textAlign="center">🎓 WELCOME BACK TO STUDY</Typography>
 
-      <Box mt={3}>
+      <Typography variant="subtitle1">YOUR PROGRESS:</Typography>
+      <LinearProgress variant="determinate" value={progress} sx={{ height: 10, borderRadius: 5, mt: 1 }} />
+      <Typography variant="body2" mt={1} mb={3}>{progress}% COMPLETED</Typography>
+
+      {/* RECOMMENDED REVIEW CONTENT */}
+      <Box>
         <Typography variant="h6">📌 RECOMMENDED REVIEW CONTENT</Typography>
         {loading ? (
           <Box display="flex" justifyContent="center" mt={2}>
@@ -71,17 +70,12 @@ const Dashboard = () => {
           </Box>
         ) : (
           <>
-            {/* Display Top Review Tasks */}
             {topReviewTasks.length > 0 ? (
-              <ul>
+              <ul style={{ paddingLeft: "20px" }}>
                 {topReviewTasks.map((task, index) => (
-                  <li key={index}>
-                    <strong>{task.topic_name}</strong> (Day {task.day_number}) - 
-                    <em> {task.objectives}</em>
-                    <br />
-                    <small>
-                      Wrong Count: {task.wrong_count} | Total Questions: {task.total_questions}
-                    </small>
+                  <li key={index} style={{ marginBottom: "10px" }}>
+                    <strong>{task.topic_name}</strong> (Day {task.day_number}) - <em>{task.objectives}</em><br />
+                    <small>Wrong Count: {task.wrong_count} | Total Questions: {task.total_questions}</small>
                   </li>
                 ))}
               </ul>
@@ -94,35 +88,32 @@ const Dashboard = () => {
         )}
       </Box>
 
-      <Box p={4}>
-      {/* Conditionally Render Based on Study Plan Existence */}
-      {studyPlanExists ? (
-        <>
-          {/* If a study plan exists */}
-          <Typography variant="h6">You already have a study plan!</Typography>
-          <Box mt={3}>
-            <Button variant="contained" color="primary" component={Link} to="/practice">
-              Start Practicing
-            </Button>
-            <Button variant="outlined" color="secondary" component={Link} to="/schedule" sx={{ ml: 2 }}>
-              View Your Study Plan
-            </Button>
+      {/* STUDY PLAN SECTION */}
+      <Box mt={5}>
+        <Typography variant="h6">📚 STUDY PLAN</Typography>
+        {studyPlanExists ? (
+          <Box mt={2}>
+            <Typography variant="subtitle1">✅ YOU ALREADY HAVE A STUDY PLAN!</Typography>
+            <Box mt={2} display="flex" gap={2}>
+              <Button variant="contained" color="primary" component={Link} to="/practice" fullWidth>
+                START PRACTICING
+              </Button>
+              <Button variant="outlined" color="secondary" component={Link} to="/schedule" fullWidth>
+                VIEW YOUR STUDY PLAN
+              </Button>
+            </Box>
           </Box>
-        </>
-      ) : (
-        <>
-          {/* If no study plan exists */}
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            No study plan found. Please upload study material.
-          </Typography>
-          <Box mt={3}>
-            <Button variant="contained" color="primary" component={Link} to="/notes">
-              Upload Material
-            </Button>
+        ) : (
+          <Box mt={2}>
+            <Typography variant="subtitle1">❌ NO STUDY PLAN FOUND. PLEASE UPLOAD STUDY MATERIAL.</Typography>
+            <Box mt={2}>
+              <Button variant="contained" color="primary" component={Link} to="/notes" fullWidth>
+                UPLOAD MATERIAL
+              </Button>
+            </Box>
           </Box>
-        </>
-      )}
-    </Box>
+        )}
+      </Box>
     </Box>
   );
 };
